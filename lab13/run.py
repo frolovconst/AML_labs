@@ -11,7 +11,7 @@ import os
 learning_rate = 0.001
 minibatch_size = 125
 num_epochs = 20
-latent_space_size = 30
+latent_space_size = 2
 log_dir = "log"
 current_run = get_current_time()
 
@@ -38,7 +38,18 @@ def create_model(input_shape):
 
 
     # %%%
-    # YOUR CODE HERE
+    inpt = tf.placeholder(tf.float32, (None,h,w,c), 'attributes')
+    inpt_flattenned = tf.contrib.layers.flatten(inpt) #tf.reshape(inpt, [-1, h*w*c])
+    H1 = tf.layers.dense(inpt_flattenned, units=200, activation=tf.sigmoid)
+    H2 = tf.layers.dense(H1, units=20, activation=tf.sigmoid)
+    encoding = tf.layers.dense(H2, units=latent_space_size, activation=tf.nn.sigmoid)
+    H22 = tf.layers.dense(encoding, units=20, activation=tf.sigmoid)
+    H11 = tf.layers.dense(H22, units=200, activation=tf.nn.sigmoid)
+    dec_flt = tf.layers.dense(H11, units=h*w*c)
+    decode = tf.reshape(dec_flt, [-1, h,w,c])
+# The results which were the most pleasing to the eye were achieved with the following loss function, 2 hidden layers and the latent spaces of tens of dimentions. 
+#     cost = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=dec_flt, labels=tf.sigmoid(inpt_flattenned)))
+    cost = tf.reduce_mean(tf.square(dec_flt-inpt_flattenned))
     # %%%
 
     model = {'cost': cost,
